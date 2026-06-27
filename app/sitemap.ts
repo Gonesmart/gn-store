@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 
-const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://gonesmartsolutions.com";
+const BASE = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/^﻿/, "").trim() || "https://gonesmartsolutions.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

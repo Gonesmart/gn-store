@@ -10,11 +10,22 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://gonesmartsolutions.com";
+const FALLBACK_URL = "https://gonesmartsolutions.com";
+
+// Strip BOM and whitespace that shell/env injection can add, then fall back if invalid
+function safeUrl(raw: string | undefined): URL {
+  const cleaned = (raw ?? "").replace(/^﻿/, "").trim();
+  try {
+    return new URL(cleaned || FALLBACK_URL);
+  } catch {
+    return new URL(FALLBACK_URL);
+  }
+}
+
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/^﻿/, "").trim() || FALLBACK_URL;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
+  metadataBase: safeUrl(process.env.NEXT_PUBLIC_APP_URL),
   title: {
     default: "GN Store — Smart Gadgets, Fashion & Cosmetics",
     template: "%s | GN Store",
