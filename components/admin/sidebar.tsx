@@ -72,15 +72,15 @@ export function AdminSidebar({ collapsed = false, onClose }: AdminSidebarProps) 
         <Link href="/admin" onClick={onClose}>
           {collapsed ? (
             <Image
-              src="/brand/logo.jpg"
+              src="/brand/whitelogo.png"
               alt="GN"
               width={32}
               height={32}
-              className="h-8 w-8 rounded object-cover"
+              className="h-8 w-8 rounded object-contain"
             />
           ) : (
             <Image
-              src="/brand/logo.jpg"
+              src="/brand/whitelogo.png"
               alt="GN Store"
               width={100}
               height={32}

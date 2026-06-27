@@ -45,19 +45,12 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div
-        className="rounded-2xl border border-[#2A2A2A] p-8"
-        style={{
-          background: "#1A1A1A",
-          boxShadow:
-            "0 4px 6px -1px rgba(0,0,0,0.4), 0 24px 48px -12px rgba(0,0,0,0.6)",
-        }}
-      >
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.07),0_24px_48px_-12px_rgba(0,0,0,0.10)] dark:border-[#2A2A2A] dark:bg-[#1A1A1A] dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.4),0_24px_48px_-12px_rgba(0,0,0,0.6)]">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Welcome back
           </h1>
-          <p className="mt-1 text-sm text-[#A3A3A3]">
+          <p className="mt-1 text-sm text-gray-500 dark:text-[#A3A3A3]">
             Sign in to your GN Store account
           </p>
         </div>
@@ -65,14 +58,14 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Server error */}
           {serverError && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500 dark:text-red-400">
               {serverError}
             </div>
           )}
 
           {/* Email */}
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-sm font-medium text-white">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-900 dark:text-white">
               Email address
             </Label>
             <Input
@@ -81,25 +74,22 @@ export default function LoginPage() {
               autoComplete="email"
               placeholder="you@example.com"
               {...register("email")}
-              className="h-11 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-[#4A4A4A] focus-visible:ring-[#5DC600] focus-visible:border-[#5DC600]"
+              className="h-11 border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus-visible:border-[#5DC600] focus-visible:ring-[#5DC600] dark:border-[#2A2A2A] dark:bg-[#0D0D0D] dark:text-white dark:placeholder:text-[#4A4A4A]"
             />
             {errors.email && (
-              <p className="text-xs text-red-400">{errors.email.message}</p>
+              <p className="text-xs text-red-500 dark:text-red-400">{errors.email.message}</p>
             )}
           </div>
 
           {/* Password */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-white"
-              >
+              <Label htmlFor="password" className="text-sm font-medium text-gray-900 dark:text-white">
                 Password
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-[#5DC600] hover:text-[#7DE620] transition-colors duration-150"
+                className="text-xs text-[#5DC600] transition-colors duration-150 hover:text-[#7DE620]"
               >
                 Forgot password?
               </Link>
@@ -111,12 +101,12 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 {...register("password")}
-                className="h-11 pr-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-[#4A4A4A] focus-visible:ring-[#5DC600] focus-visible:border-[#5DC600]"
+                className="h-11 border-gray-200 bg-gray-50 pr-10 text-gray-900 placeholder:text-gray-400 focus-visible:border-[#5DC600] focus-visible:ring-[#5DC600] dark:border-[#2A2A2A] dark:bg-[#0D0D0D] dark:text-white dark:placeholder:text-[#4A4A4A]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] hover:text-white transition-colors duration-150"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors duration-150 hover:text-gray-700 dark:text-[#A3A3A3] dark:hover:text-white"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -127,7 +117,7 @@ export default function LoginPage() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-400">{errors.password.message}</p>
+              <p className="text-xs text-red-500 dark:text-red-400">{errors.password.message}</p>
             )}
           </div>
 
@@ -135,12 +125,12 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-11 bg-[#5DC600] hover:bg-[#4DAD00] active:bg-[#3D9600] text-black font-semibold transition-colors duration-150 focus-visible:ring-[#5DC600]"
+            className="h-11 w-full bg-[#5DC600] font-semibold text-black transition-colors duration-150 hover:bg-[#4DAD00] active:bg-[#3D9600] focus-visible:ring-[#5DC600]"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in…
+                Signing in...
               </>
             ) : (
               "Sign in"
@@ -148,11 +138,11 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-[#A3A3A3]">
+        <p className="mt-6 text-center text-sm text-gray-500 dark:text-[#A3A3A3]">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="font-medium text-[#5DC600] hover:text-[#7DE620] transition-colors duration-150"
+            className="font-medium text-[#5DC600] transition-colors duration-150 hover:text-[#7DE620]"
           >
             Create one
           </Link>

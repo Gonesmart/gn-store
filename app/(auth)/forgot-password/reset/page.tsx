@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -15,7 +15,7 @@ import {
   type ResetPasswordInput,
 } from "@/lib/validations/auth";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
           </p>
           <Link
             href="/forgot-password"
-            className="mt-4 inline-block text-sm font-medium text-[#5DC600] hover:text-[#7DE620] transition-colors duration-150"
+            className="mt-4 inline-block text-sm font-medium text-[#5DC600] transition-colors duration-150 hover:text-[#7DE620]"
           >
             Request new reset link
           </Link>
@@ -110,12 +110,12 @@ export default function ResetPasswordPage() {
                 autoComplete="new-password"
                 placeholder="Min. 8 chars, 1 uppercase, 1 number"
                 {...register("password")}
-                className="h-11 pr-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-[#4A4A4A] focus-visible:ring-[#5DC600] focus-visible:border-[#5DC600]"
+                className="h-11 border-[#2A2A2A] bg-[#0D0D0D] pr-10 text-white placeholder:text-[#4A4A4A] focus-visible:border-[#5DC600] focus-visible:ring-[#5DC600]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] hover:text-white transition-colors duration-150"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] transition-colors duration-150 hover:text-white"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -144,12 +144,12 @@ export default function ResetPasswordPage() {
                 autoComplete="new-password"
                 placeholder="••••••••"
                 {...register("confirmPassword")}
-                className="h-11 pr-10 bg-[#0D0D0D] border-[#2A2A2A] text-white placeholder:text-[#4A4A4A] focus-visible:ring-[#5DC600] focus-visible:border-[#5DC600]"
+                className="h-11 border-[#2A2A2A] bg-[#0D0D0D] pr-10 text-white placeholder:text-[#4A4A4A] focus-visible:border-[#5DC600] focus-visible:ring-[#5DC600]"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] hover:text-white transition-colors duration-150"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A3A3A3] transition-colors duration-150 hover:text-white"
                 aria-label={showConfirm ? "Hide password" : "Show password"}
               >
                 {showConfirm ? (
@@ -169,7 +169,7 @@ export default function ResetPasswordPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-11 bg-[#5DC600] hover:bg-[#4DAD00] active:bg-[#3D9600] text-black font-semibold transition-colors duration-150 focus-visible:ring-[#5DC600]"
+            className="h-11 w-full bg-[#5DC600] font-semibold text-black transition-colors duration-150 hover:bg-[#4DAD00] focus-visible:ring-[#5DC600] active:bg-[#3D9600]"
           >
             {isSubmitting ? (
               <>
@@ -183,5 +183,13 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
