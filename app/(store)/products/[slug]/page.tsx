@@ -467,6 +467,7 @@ async function fetchProduct(slug: string) {
       images: { orderBy: { position: "asc" } },
       variants: { orderBy: { price: "asc" } },
       reviews: {
+        where: { approved: true },
         orderBy: { createdAt: "desc" },
         include: { user: { select: { name: true } } },
       },

@@ -37,11 +37,13 @@ export async function submitReview(input: unknown): Promise<ReviewResult> {
         rating,
         title: title ?? null,
         body,
+        approved: false,
       },
       update: {
         rating,
         title: title ?? null,
         body,
+        approved: false,
       },
     });
 

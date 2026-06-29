@@ -13,6 +13,7 @@ import {
   ImageIcon,
   BarChart3,
   LogOut,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,6 +32,7 @@ const navItems = [
   { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Coupons", href: "/admin/coupons", icon: Tag },
+  { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Media", href: "/admin/media", icon: ImageIcon },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
 ];
