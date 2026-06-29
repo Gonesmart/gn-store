@@ -37,11 +37,12 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
   }, [ref, handler]);
 }
 
-export function AdminTopbar({ userName, userEmail, notifications }: AdminTopbarProps) {
+export function AdminTopbar({ userName, userEmail, notifications: initialNotifications }: AdminTopbarProps) {
   const router = useRouter();
   const [bellOpen, setBellOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<AdminNotification[]>(initialNotifications);
   const bellRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +57,24 @@ export function AdminTopbar({ userName, userEmail, notifications }: AdminTopbarP
     } catch {
       // Ignore parse errors
     }
+  }, []);
+
+  // Poll for new notifications every 30 seconds
+  useEffect(() => {
+    async function poll() {
+      try {
+        const res = await fetch("/api/admin/notifications", { cache: "no-store" });
+        if (res.ok) {
+          const data = (await res.json()) as AdminNotification[];
+          setNotifications(data);
+        }
+      } catch {
+        // Ignore network errors — keep showing last known notifications
+      }
+    }
+
+    const id = setInterval(poll, 30_000);
+    return () => clearInterval(id);
   }, []);
 
   function markRead(id: string) {

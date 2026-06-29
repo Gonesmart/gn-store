@@ -1,21 +1,15 @@
-"use server";
-
-import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 
-export type AdminNotification = {
-  id: string;
-  type: "new_order" | "new_customer" | "pending_review";
-  title: string;
-  body: string;
-  link: string;
-  createdAt: Date;
-};
+export const dynamic = "force-dynamic";
 
-export async function getAdminNotifications(): Promise<AdminNotification[]> {
+export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as { role: string }).role !== "ADMIN") return [];
+  if (!session || (session.user as { role: string }).role !== "ADMIN") {
+    return NextResponse.json([], { status: 401 });
+  }
 
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -42,7 +36,7 @@ export async function getAdminNotifications(): Promise<AdminNotification[]> {
     }),
   ]);
 
-  const notifications: AdminNotification[] = [
+  const notifications = [
     ...orders.map((o) => ({
       id: `order-${o.id}`,
       type: "new_order" as const,
@@ -67,9 +61,9 @@ export async function getAdminNotifications(): Promise<AdminNotification[]> {
       link: `/admin/reviews`,
       createdAt: r.createdAt,
     })),
-  ];
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  return notifications.sort(
-    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-  );
+  return NextResponse.json(notifications, {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
