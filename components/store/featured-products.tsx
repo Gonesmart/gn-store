@@ -1,26 +1,37 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ProductCard, type ProductCardData } from "@/components/store/product-card";
 
-export function FeaturedProducts({ products }: { products: ProductCardData[] }) {
+export function FeaturedProducts({
+  products,
+  wishlistedIds = [],
+}: {
+  products: ProductCardData[];
+  wishlistedIds?: string[];
+}) {
   if (products.length === 0) return null;
 
+  const wishlistedSet = new Set(wishlistedIds);
+
   return (
-    <section className="bg-gray-50 py-20 dark:bg-[#0D0D0D]">
+    <section className="bg-gray-50 py-24 dark:bg-[#0A0A0A] lg:py-32">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         {/* Section header */}
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-12 flex items-end justify-between">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#5DC600]">
-              Handpicked
-            </p>
-            <h2 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white lg:text-4xl">
-              Featured Products
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#5DC600]/30 bg-[#5DC600]/8 px-4 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#5DC600]" />
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] text-[#5DC600]">
+                Featured
+              </span>
+            </div>
+            <h2 className="text-[clamp(26px,3.2vw,42px)] font-bold leading-[1.05] tracking-[-0.02em] text-gray-900 dark:text-white">
+              Top Picks This Week
             </h2>
           </div>
           <Link
             href="/shop"
-            className="hidden items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-[#5DC600] dark:text-[#A3A3A3] dark:hover:text-[#5DC600] sm:inline-flex"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-[#5DC600] dark:text-[#A3A3A3] dark:hover:text-[#5DC600]"
           >
             View all <ArrowRight size={14} />
           </Link>
@@ -29,7 +40,11 @@ export function FeaturedProducts({ products }: { products: ProductCardData[] }) 
         {/* Grid */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              initialWishlisted={wishlistedSet.has(product.id)}
+            />
           ))}
         </div>
 

@@ -109,12 +109,13 @@ export function CartDrawer() {
                   Add some products to get started
                 </p>
               </div>
-              <button
+              <Link
+                href="/shop"
                 onClick={closeCart}
                 className="mt-2 rounded-xl bg-[#5DC600] px-6 py-2.5 text-sm font-bold text-black transition-colors hover:bg-[#4DAF00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5DC600] active:bg-[#3D9600]"
               >
                 Browse Products
-              </button>
+              </Link>
             </div>
           ) : (
             <ul className="divide-y divide-gray-50 dark:divide-[#1A1A1A]">
@@ -192,7 +193,7 @@ export function CartDrawer() {
                           onClick={() =>
                             handleQty(item.variantId, item.quantity + 1)
                           }
-                          disabled={isLoading || item.quantity >= item.stock}
+                          disabled={isLoading || (item.stock !== null && item.quantity >= item.stock)}
                           aria-label="Increase quantity"
                           className="flex h-full w-8 items-center justify-center text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-30 dark:text-[#A3A3A3] dark:hover:text-white"
                         >

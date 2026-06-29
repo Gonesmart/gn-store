@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,19 @@ import { authClient } from "@/lib/auth-client";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const raw = searchParams.get("callbackUrl") ?? "/account";
+  // Only allow relative paths — block open redirects to external URLs
+  const callbackUrl = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/account";
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
 
@@ -30,7 +42,7 @@ export default function LoginPage() {
     const { error } = await authClient.signIn.email({
       email: data.email,
       password: data.password,
-      callbackURL: "/account",
+      callbackURL: callbackUrl,
     });
 
     if (error) {
@@ -38,7 +50,7 @@ export default function LoginPage() {
         error.message ?? "Invalid email or password. Please try again."
       );
     } else {
-      router.push("/account");
+      router.push(callbackUrl);
       router.refresh();
     }
   }

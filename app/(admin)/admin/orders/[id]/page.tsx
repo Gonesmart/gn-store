@@ -68,7 +68,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
   const customer = order.user
     ? { name: order.user.name, email: order.user.email, id: order.user.id }
-    : { name: "Guest", email: order.guestEmail ?? "—", id: null };
+    : { name: "Guest", email: order.guestEmail ?? "-", id: null };
 
   return (
     <div className="flex flex-col gap-6">

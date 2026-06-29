@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,14 +53,22 @@ const defaultVariant = {
   color: "",
   price: 0,
   compareAtPrice: null,
-  stock: 0,
+  stock: null,
   sku: "",
 };
+
+function detectIsVariable(data?: ProductFormValues): boolean {
+  if (!data) return false;
+  if (data.variants.length > 1) return true;
+  const v = data.variants[0];
+  return !!(v?.size || v?.color);
+}
 
 export function ProductForm({ categories, initialData, mode }: ProductFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
+  const [isVariable, setIsVariable] = useState(() => detectIsVariable(initialData));
 
   const {
     register,
@@ -89,6 +97,25 @@ export function ProductForm({ categories, initialData, mode }: ProductFormProps)
   });
 
   const watchedImages = watch("images");
+
+  function handleVariableToggle(checked: boolean) {
+    setIsVariable(checked);
+    if (!checked) {
+      // Switching to simple: collapse all variants down to the first one, clear size/color
+      const first = fields[0];
+      setValue("variants", [
+        {
+          id: first?.id,
+          size: "",
+          color: "",
+          price: (watch(`variants.0.price`) as number) || 0,
+          compareAtPrice: (watch(`variants.0.compareAtPrice`) as number | null) ?? null,
+          stock: (watch(`variants.0.stock`) as number | null) ?? null,
+          sku: (watch(`variants.0.sku`) as string) || "",
+        },
+      ]);
+    }
+  }
 
   async function onSubmit(data: ProductFormValues) {
     setServerError(null);
@@ -167,113 +194,191 @@ export function ProductForm({ categories, initialData, mode }: ProductFormProps)
             </div>
           </Section>
 
-          {/* Variants */}
-          <Section title="Variants" description="At least one variant is required. Each variant has its own price and stock.">
-            <div className="flex flex-col gap-3">
-              {/* Header row */}
-              <div className="hidden grid-cols-[1fr_1fr_100px_100px_80px_80px_32px] gap-2 text-xs font-medium text-[#A3A3A3] sm:grid">
-                <span>Size</span>
-                <span>Color</span>
-                <span>Price (₦)</span>
-                <span>Compare At</span>
-                <span>Stock</span>
-                <span>SKU</span>
-                <span />
+          {/* Pricing & Stock */}
+          <Section
+            title={isVariable ? "Variants" : "Pricing & Stock"}
+            description={
+              isVariable
+                ? "Each variant has its own price, stock, and optional size/color."
+                : "Set the price and available stock for this product."
+            }
+          >
+            {/* Variable toggle */}
+            <div className="mb-5 flex items-center justify-between rounded-lg border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-white">Variable product</p>
+                <p className="text-xs text-[#A3A3A3]">
+                  Enable to add multiple variants with different sizes, colors, or prices
+                </p>
               </div>
-
-              {fields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="grid grid-cols-1 gap-2 rounded-lg border border-[#2A2A2A] bg-[#0D0D0D] p-3 sm:grid-cols-[1fr_1fr_100px_100px_80px_80px_32px] sm:items-start sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0"
-                >
-                  <div>
-                    <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Size</label>
-                    <Input
-                      {...register(`variants.${index}.size`)}
-                      placeholder="e.g. M, L, 42"
-                      className={inputClass(false)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Color</label>
-                    <Input
-                      {...register(`variants.${index}.color`)}
-                      placeholder="e.g. Black"
-                      className={inputClass(false)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Price (₦)</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...register(`variants.${index}.price`, { valueAsNumber: true })}
-                      placeholder="0.00"
-                      className={inputClass(!!errors.variants?.[index]?.price)}
-                    />
-                    <FieldError message={errors.variants?.[index]?.price?.message} />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Compare At</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...register(`variants.${index}.compareAtPrice`, { valueAsNumber: true, setValueAs: (v) => (v === "" || isNaN(Number(v)) ? null : Number(v)) })}
-                      placeholder="0.00"
-                      className={inputClass(false)}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Stock</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      {...register(`variants.${index}.stock`, { valueAsNumber: true })}
-                      placeholder="0"
-                      className={inputClass(!!errors.variants?.[index]?.stock)}
-                    />
-                    <FieldError message={errors.variants?.[index]?.stock?.message} />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">SKU</label>
-                    <Input
-                      {...register(`variants.${index}.sku`)}
-                      placeholder="SKU-001"
-                      className={inputClass(false)}
-                    />
-                  </div>
-                  <div className="flex items-start pt-0 sm:pt-0">
-                    <button
-                      type="button"
-                      onClick={() => fields.length > 1 && remove(index)}
-                      disabled={fields.length === 1}
-                      className="flex h-9 w-8 items-center justify-center rounded text-[#A3A3A3] transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Remove variant"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {errors.variants?.root && (
-                <FieldError message={errors.variants.root.message} />
-              )}
-              {errors.variants?.message && (
-                <FieldError message={errors.variants.message} />
-              )}
-
-              <button
-                type="button"
-                onClick={() => append({ ...defaultVariant })}
-                className="flex items-center gap-2 rounded-lg border border-dashed border-[#2A2A2A] px-4 py-2.5 text-sm text-[#A3A3A3] transition-colors hover:border-[#5DC600]/40 hover:text-[#5DC600]"
-              >
-                <Plus className="h-4 w-4" />
-                Add Variant
-              </button>
+              <Switch
+                checked={isVariable}
+                onCheckedChange={handleVariableToggle}
+                className="data-[checked]:bg-[#5DC600]"
+              />
             </div>
+
+            {isVariable ? (
+              /* ── Variable: full variants table ── */
+              <div className="flex flex-col gap-3">
+                <div className="hidden grid-cols-[1fr_1fr_100px_100px_80px_80px_32px] gap-2 text-xs font-medium text-[#A3A3A3] sm:grid">
+                  <span>Size</span>
+                  <span>Color</span>
+                  <span>Price (₦)</span>
+                  <span>Compare At</span>
+                  <span>Stock</span>
+                  <span>SKU</span>
+                  <span />
+                </div>
+
+                {fields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-1 gap-2 rounded-lg border border-[#2A2A2A] bg-[#0D0D0D] p-3 sm:grid-cols-[1fr_1fr_100px_100px_80px_80px_32px] sm:items-start sm:rounded-none sm:border-0 sm:bg-transparent sm:p-0"
+                  >
+                    <div>
+                      <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Size</label>
+                      <Input
+                        {...register(`variants.${index}.size`)}
+                        placeholder="e.g. M, L, 42"
+                        className={inputClass(false)}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Color</label>
+                      <Input
+                        {...register(`variants.${index}.color`)}
+                        placeholder="e.g. Black"
+                        className={inputClass(false)}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Price (₦)</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...register(`variants.${index}.price`, { valueAsNumber: true })}
+                        placeholder="0.00"
+                        className={inputClass(!!errors.variants?.[index]?.price)}
+                      />
+                      <FieldError message={errors.variants?.[index]?.price?.message} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Compare At</label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...register(`variants.${index}.compareAtPrice`, {
+                          setValueAs: (v) => (v === "" || v === null || v === undefined || isNaN(Number(v)) ? null : Number(v)),
+                        })}
+                        placeholder="0.00"
+                        className={inputClass(false)}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">Stock</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...register(`variants.${index}.stock`, {
+                          setValueAs: (v) => (v === "" || v === null || v === undefined || isNaN(Number(v)) ? null : Number(v)),
+                        })}
+                        placeholder="Leave blank if unlimited"
+                        className={inputClass(!!errors.variants?.[index]?.stock)}
+                      />
+                      <FieldError message={errors.variants?.[index]?.stock?.message} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-[#A3A3A3] sm:hidden">SKU</label>
+                      <Input
+                        {...register(`variants.${index}.sku`)}
+                        placeholder="SKU-001"
+                        className={inputClass(false)}
+                      />
+                    </div>
+                    <div className="flex items-start pt-0 sm:pt-0">
+                      <button
+                        type="button"
+                        onClick={() => fields.length > 1 && remove(index)}
+                        disabled={fields.length === 1}
+                        className="flex h-9 w-8 items-center justify-center rounded text-[#A3A3A3] transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
+                        aria-label="Remove variant"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {errors.variants?.root && (
+                  <FieldError message={errors.variants.root.message} />
+                )}
+                {errors.variants?.message && (
+                  <FieldError message={errors.variants.message} />
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => append({ ...defaultVariant })}
+                  className="flex items-center gap-2 rounded-lg border border-dashed border-[#2A2A2A] px-4 py-2.5 text-sm text-[#A3A3A3] transition-colors hover:border-[#5DC600]/40 hover:text-[#5DC600]"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Variant
+                </button>
+              </div>
+            ) : (
+              /* ── Simple: flat price/stock fields ── */
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label className="text-[#A3A3A3]">Price (₦) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...register("variants.0.price", { valueAsNumber: true })}
+                    placeholder="0.00"
+                    className={inputClass(!!errors.variants?.[0]?.price)}
+                  />
+                  <FieldError message={errors.variants?.[0]?.price?.message} />
+                </div>
+                <div>
+                  <Label className="text-[#A3A3A3]">Compare At Price (₦) <span className="text-[#555]">- optional</span></Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...register("variants.0.compareAtPrice", {
+                      setValueAs: (v) => (v === "" || v === null || v === undefined || isNaN(Number(v)) ? null : Number(v)),
+                    })}
+                    placeholder="Leave blank if no discount"
+                    className={inputClass(false)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[#A3A3A3]">Stock Quantity <span className="text-[#555]">- optional</span></Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...register("variants.0.stock", {
+                      setValueAs: (v) => (v === "" || v === null || v === undefined || isNaN(Number(v)) ? null : Number(v)),
+                    })}
+                    placeholder="Leave blank if unlimited"
+                    className={inputClass(!!errors.variants?.[0]?.stock)}
+                  />
+                  <FieldError message={errors.variants?.[0]?.stock?.message} />
+                </div>
+                <div>
+                  <Label className="text-[#A3A3A3]">SKU</Label>
+                  <Input
+                    {...register("variants.0.sku")}
+                    placeholder="SKU-001"
+                    className={inputClass(false)}
+                  />
+                </div>
+              </div>
+            )}
           </Section>
 
           {/* Images */}
@@ -367,7 +472,11 @@ export function ProductForm({ categories, initialData, mode }: ProductFormProps)
                       errors.categoryId && "border-red-500/50"
                     )}
                   >
-                    <SelectValue placeholder="Select a category" />
+                    <span className="flex flex-1 truncate text-left text-sm">
+                      {field.value
+                        ? (categories.find((c) => c.id === field.value)?.name ?? "Select a category")
+                        : <span className="text-[#4A4A4A]">Select a category</span>}
+                    </span>
                   </SelectTrigger>
                   <SelectContent className="border-[#2A2A2A] bg-[#1A1A1A] text-white">
                     {categories.map((cat) => (

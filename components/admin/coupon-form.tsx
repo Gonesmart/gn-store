@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -208,7 +208,7 @@ export function CouponForm({ mode, initialData, onSuccess, onCancel }: CouponFor
               />
             </div>
             <span className="text-sm text-[#A3A3A3]">
-              {field.value ? "Active — coupon can be used at checkout" : "Inactive — coupon is disabled"}
+              {field.value ? "Active - coupon can be used at checkout" : "Inactive - coupon is disabled"}
             </span>
           </label>
         )}

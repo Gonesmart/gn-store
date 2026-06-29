@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { ImagePlus, X, Loader2, Library } from "lucide-react";
 import { getCategoryUploadSignature } from "@/actions/categories";
+import { MediaPickerDialog } from "@/components/admin/media-picker-dialog";
 
 interface CategoryImageUploaderProps {
   value: string;
@@ -18,6 +19,7 @@ export function CategoryImageUploader({
 }: CategoryImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File | null) {
@@ -58,6 +60,10 @@ export function CategoryImageUploader({
     }
   }
 
+  function handleLibrarySelect(items: Array<{ url: string; publicId: string }>) {
+    if (items[0]) onChange(items[0].url, items[0].publicId);
+  }
+
   function remove() {
     onChange("", "");
   }
@@ -71,6 +77,7 @@ export function CategoryImageUploader({
           fill
           className="object-cover"
           sizes="128px"
+          unoptimized
         />
         <button
           type="button"
@@ -91,34 +98,55 @@ export function CategoryImageUploader({
 
   return (
     <div className="space-y-2">
-      <label
-        className={`flex h-32 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed transition-colors duration-150 ${
-          uploading
-            ? "border-[#5DC600]/40 bg-[#5DC600]/5"
-            : "border-[#2A2A2A] bg-[#0D0D0D] hover:border-[#5DC600]/40 hover:bg-[#5DC600]/5"
-        }`}
-      >
-        {uploading ? (
-          <>
-            <Loader2 className="h-7 w-7 animate-spin text-[#5DC600]" />
-            <p className="text-xs text-[#A3A3A3]">Uploading…</p>
-          </>
-        ) : (
-          <>
-            <ImagePlus className="h-7 w-7 text-[#A3A3A3]" />
-            <p className="text-xs text-[#A3A3A3]">Click to upload</p>
-          </>
-        )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          disabled={uploading}
-          onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-        />
-      </label>
+      <div className="flex gap-2">
+        {/* Upload new */}
+        <label
+          className={`flex h-32 flex-1 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed transition-colors duration-150 ${
+            uploading
+              ? "border-[#5DC600]/40 bg-[#5DC600]/5"
+              : "border-[#2A2A2A] bg-[#0D0D0D] hover:border-[#5DC600]/40 hover:bg-[#5DC600]/5"
+          }`}
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="h-7 w-7 animate-spin text-[#5DC600]" />
+              <p className="text-xs text-[#A3A3A3]">Uploading…</p>
+            </>
+          ) : (
+            <>
+              <ImagePlus className="h-7 w-7 text-[#A3A3A3]" />
+              <p className="text-xs text-[#A3A3A3]">Upload image</p>
+            </>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            disabled={uploading}
+            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+
+        {/* Choose from library */}
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#2A2A2A] bg-[#0D0D0D] px-4 text-[#A3A3A3] transition-colors duration-150 hover:border-[#5DC600]/40 hover:bg-[#5DC600]/5 hover:text-white focus-visible:outline-none"
+        >
+          <Library className="h-7 w-7" />
+          <p className="whitespace-nowrap text-xs font-medium">Media Library</p>
+        </button>
+      </div>
+
       {error && <p className="text-xs text-red-400">{error}</p>}
+
+      <MediaPickerDialog
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handleLibrarySelect}
+        multiple={false}
+      />
     </div>
   );
 }

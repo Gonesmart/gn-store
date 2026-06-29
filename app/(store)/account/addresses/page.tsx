@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AddressBook } from "@/components/store/address-book";
 
 export default async function AddressesPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return null;
+  if (!session) redirect("/login");
 
   const addresses = await db.address.findMany({
     where: { userId: session.user.id },

@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/utils";
@@ -24,7 +25,7 @@ function paymentBadge(status: string) {
 
 export default async function OrdersPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return null;
+  if (!session) redirect("/login");
 
   const orders = await db.order.findMany({
     where: { userId: session.user.id },

@@ -13,7 +13,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const product = await db.product.findUnique({ where: { id }, select: { name: true } });
-  return { title: product ? `Edit — ${product.name}` : "Edit Product" };
+  return { title: product ? `Edit - ${product.name}` : "Edit Product" };
 }
 
 export default async function EditProductPage({ params }: PageProps) {

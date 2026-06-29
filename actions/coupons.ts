@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -106,7 +106,7 @@ export async function deleteCoupon(id: string) {
     if (usage > 0) {
       return {
         success: false as const,
-        error: `Cannot delete — this coupon has been used in ${usage} order${usage !== 1 ? "s" : ""}`,
+        error: `Cannot delete - this coupon has been used in ${usage} order${usage !== 1 ? "s" : ""}`,
       };
     }
 

@@ -192,7 +192,13 @@ export function CategoryForm({
                   onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
                 >
                   <SelectTrigger className="w-full border-[#2A2A2A] bg-[#0D0D0D] text-white">
-                    <SelectValue placeholder="Top-level (no parent)" />
+                    <SelectValue>
+                      {field.value && field.value !== "" ? (
+                        topLevelCategories.find((c) => c.id === field.value)?.name ?? "Select parent"
+                      ) : (
+                        <span className="text-[#4A4A4A]">Top-level (no parent)</span>
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="border-[#2A2A2A] bg-[#1A1A1A] text-white">
                     <SelectItem value="__none__" className="hover:bg-[#2A2A2A] text-[#A3A3A3]">

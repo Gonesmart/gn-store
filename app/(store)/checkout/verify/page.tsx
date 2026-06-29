@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { XCircle } from "lucide-react";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { PAYSTACK_SECRET_KEY, PAYSTACK_BASE_URL } from "@/lib/paystack";
 import { sendOrderEmails } from "@/lib/email";
@@ -16,7 +17,10 @@ async function verifyPaystackTransaction(reference: string) {
       cache: "no-store",
     }
   );
-  return res.json();
+  if (!res.ok && res.status !== 400) {
+    throw new Error(`Paystack API error: ${res.status}`);
+  }
+  return res.json() as Promise<{ status: boolean | string; data?: { status: string } }>;
 }
 
 export default async function CheckoutVerifyPage({
@@ -30,9 +34,16 @@ export default async function CheckoutVerifyPage({
   if (!ref) redirect("/checkout");
 
   // Verify payment with Paystack API
-  const paystackData = await verifyPaystackTransaction(ref);
+  let paystackData: { status: boolean | string; data?: { status: string } } | null = null;
+  try {
+    paystackData = await verifyPaystackTransaction(ref);
+  } catch {
+    // Paystack API unreachable — fail safe
+  }
   const paymentSuccess =
-    paystackData.status === true && paystackData.data?.status === "success";
+    paystackData !== null &&
+    (paystackData.status === true || paystackData.status === "success") &&
+    paystackData.data?.status === "success";
 
   if (!paymentSuccess) {
     return (
@@ -45,7 +56,7 @@ export default async function CheckoutVerifyPage({
             Payment not completed
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-[#A3A3A3]">
-            Your payment was cancelled or unsuccessful. Your order has not been placed &mdash; your
+            Your payment was cancelled or unsuccessful. Your order has not been placed. Your
             cart is safe.
           </p>
         </div>
@@ -100,18 +111,21 @@ export default async function CheckoutVerifyPage({
 
   // Mark PAID and increment coupon — only if not already done by webhook
   if (!wasAlreadyPaid) {
-    await db.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: order.id },
-        data: { paymentStatus: "PAID", status: "PROCESSING" },
-      });
-      if (order.couponId) {
-        await tx.coupon.update({
-          where: { id: order.couponId },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
+    await db.order.update({
+      where: { id: order.id },
+      data: { paymentStatus: "PAID", status: "PROCESSING" },
     });
+    if (order.couponId) {
+      await db.coupon.update({
+        where: { id: order.couponId },
+        data: { usedCount: { increment: 1 } },
+      }).catch(() => {
+        // Coupon may have been deleted — non-fatal
+      });
+    }
+
+    revalidatePath("/account/orders");
+    revalidatePath(`/account/orders/${order.id}`);
 
     // Send confirmation emails (fire-and-forget — never block the redirect)
     const addr = order.shippingAddress as Record<string, string>;

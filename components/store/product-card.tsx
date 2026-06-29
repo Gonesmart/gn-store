@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Check, Loader2 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import { addToCart } from "@/actions/cart";
+import { useCartStore } from "@/lib/cart-store";
+import { WishlistButton } from "@/components/store/wishlist-button";
 
 export type ProductCardData = {
   id: string;
@@ -14,9 +18,20 @@ export type ProductCardData = {
   price: string;
   compareAtPrice: string | null;
   categoryName: string;
+  variantId: string;
 };
 
-export function ProductCard({ product }: { product: ProductCardData }) {
+export function ProductCard({
+  product,
+  initialWishlisted = false,
+}: {
+  product: ProductCardData;
+  initialWishlisted?: boolean;
+}) {
+  const [state, setState] = useState<"idle" | "loading" | "added">("idle");
+  const setItems = useCartStore((s) => s.setItems);
+  const openCart = useCartStore((s) => s.openCart);
+
   const price = parseFloat(product.price);
   const comparePrice = product.compareAtPrice
     ? parseFloat(product.compareAtPrice)
@@ -25,6 +40,23 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const discountPct = hasDiscount
     ? Math.round((1 - price / comparePrice!) * 100)
     : 0;
+
+  async function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (state !== "idle" || !product.variantId) return;
+
+    setState("loading");
+    const res = await addToCart(product.variantId, 1);
+    if (res.success) {
+      setItems(res.cart);
+      setState("added");
+      openCart();
+      setTimeout(() => setState("idle"), 2000);
+    } else {
+      setState("idle");
+    }
+  }
 
   return (
     <Link
@@ -58,16 +90,29 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         )}
 
-        {/* Add to Cart hover panel */}
-        <div className="absolute bottom-0 left-0 right-0 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
+        {/* Wishlist button */}
+        <div className="absolute right-3 top-3">
+          <WishlistButton productId={product.id} initialWishlisted={initialWishlisted} />
+        </div>
+
+        {/* Add to Cart — always visible on mobile, slides up on desktop hover */}
+        <div className="absolute bottom-0 left-0 right-0 translate-y-0 sm:translate-y-full sm:transition-transform sm:duration-300 sm:group-hover:translate-y-0">
           <button
-            className="flex w-full items-center justify-center gap-2 bg-[#5DC600] py-3 text-sm font-bold text-black transition-colors hover:bg-[#4DAF00]"
-            onClick={(e) => {
-              e.preventDefault();
-            }}
+            onClick={handleAddToCart}
+            disabled={state !== "idle"}
+            className={`flex w-full items-center justify-center gap-2 py-3 text-sm font-bold text-black transition-colors ${
+              state === "added"
+                ? "bg-[#4DAF00]"
+                : "bg-[#5DC600] hover:bg-[#4DAF00] active:bg-[#3D9600]"
+            } disabled:cursor-default`}
           >
-            <ShoppingBag size={15} />
-            Add to Cart
+            {state === "loading" ? (
+              <><Loader2 size={15} className="animate-spin" />Adding…</>
+            ) : state === "added" ? (
+              <><Check size={15} />Added!</>
+            ) : (
+              <><ShoppingBag size={15} />Add to Cart</>
+            )}
           </button>
         </div>
       </div>

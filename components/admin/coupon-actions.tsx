@@ -71,8 +71,8 @@ export function CouponActions({ coupon }: CouponActionsProps) {
             <Loader2 className="absolute inset-0 m-auto h-3 w-3 animate-spin text-white" />
           ) : (
             <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                coupon.active ? "translate-x-4" : "translate-x-0.5"
+              className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                coupon.active ? "translate-x-4" : "translate-x-0"
               }`}
             />
           )}

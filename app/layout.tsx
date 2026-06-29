@@ -27,7 +27,7 @@ const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/^﻿/, "").tri
 export const metadata: Metadata = {
   metadataBase: safeUrl(process.env.NEXT_PUBLIC_APP_URL),
   title: {
-    default: "GN Store — Smart Gadgets, Fashion & Cosmetics",
+    default: "GN Store - Smart Gadgets, Fashion & Cosmetics",
     template: "%s | GN Store",
   },
   description:
@@ -47,14 +47,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_NG",
     siteName: "GN Store",
-    title: "GN Store — Smart Gadgets, Fashion & Cosmetics",
+    title: "GN Store - Smart Gadgets, Fashion & Cosmetics",
     description:
       "Shop the latest gadgets, cosmetics, and fashion at GN Store. Premium quality, fast delivery across Nigeria.",
     url: BASE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "GN Store — Smart Gadgets, Fashion & Cosmetics",
+    title: "GN Store - Smart Gadgets, Fashion & Cosmetics",
     description:
       "Shop the latest gadgets, cosmetics, and fashion at GN Store. Premium quality, fast delivery across Nigeria.",
   },

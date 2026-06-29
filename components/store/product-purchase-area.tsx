@@ -11,7 +11,7 @@ export type SerializedVariant = {
   color: string | null;
   price: string;
   compareAtPrice: string | null;
-  stock: number;
+  stock: number | null;
 };
 
 function getUniqueValues<T>(arr: T[]): T[] {
@@ -87,8 +87,10 @@ export function ProductPurchaseArea({
     : 0;
   const savings = hasDiscount ? comparePrice! - price : 0;
 
-  const inStock = selectedVariant ? selectedVariant.stock > 0 : false;
-  const stockCount = selectedVariant?.stock ?? 0;
+  const inStock = selectedVariant
+    ? selectedVariant.stock === null || selectedVariant.stock > 0
+    : false;
+  const stockCount = selectedVariant?.stock ?? null;
   const needsSelection =
     (hasColors && !selectedColor) || (hasSizes && !selectedSize);
 
@@ -181,7 +183,9 @@ export function ProductPurchaseArea({
                   v.size === size &&
                   (!hasColors || v.color === selectedColor)
               );
-              const outOfStock = variantForSize ? variantForSize.stock === 0 : !available;
+              const outOfStock = variantForSize
+                ? variantForSize.stock !== null && variantForSize.stock === 0
+                : !available;
 
               return (
                 <button
@@ -209,14 +213,14 @@ export function ProductPurchaseArea({
         <p
           className={`text-sm font-medium ${
             inStock
-              ? stockCount <= 5
+              ? stockCount !== null && stockCount <= 5
                 ? "text-amber-500"
                 : "text-[#5DC600]"
               : "text-red-500"
           }`}
         >
           {inStock
-            ? stockCount <= 5
+            ? stockCount !== null && stockCount <= 5
               ? `Only ${stockCount} left in stock`
               : "In stock"
             : "Out of stock"}
@@ -240,9 +244,9 @@ export function ProductPurchaseArea({
           </span>
           <button
             onClick={() =>
-              setQty((q) => Math.min(q + 1, selectedVariant?.stock ?? 99))
+              setQty((q) => Math.min(q + 1, selectedVariant?.stock ?? 9999))
             }
-            disabled={qty >= (selectedVariant?.stock ?? 99)}
+            disabled={selectedVariant?.stock !== null && selectedVariant?.stock !== undefined && qty >= selectedVariant.stock}
             aria-label="Increase quantity"
             className="flex h-full w-11 items-center justify-center text-gray-500 transition-colors hover:text-gray-900 disabled:opacity-30 dark:text-[#A3A3A3] dark:hover:text-white"
           >

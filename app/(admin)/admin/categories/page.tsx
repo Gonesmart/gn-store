@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import { Plus, FolderOpen } from "lucide-react";
 import { db } from "@/lib/db";
@@ -184,7 +184,7 @@ export default async function CategoriesPage() {
                           Subcategory
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-[#A3A3A3]">—</TableCell>
+                      <TableCell className="text-sm text-[#A3A3A3]">-</TableCell>
                       <TableCell className="text-sm text-[#A3A3A3]">
                         {sub._count.products}
                       </TableCell>
@@ -237,7 +237,7 @@ export default async function CategoriesPage() {
                         Subcategory
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-[#A3A3A3]">—</TableCell>
+                    <TableCell className="text-sm text-[#A3A3A3]">-</TableCell>
                     <TableCell className="text-sm text-[#A3A3A3]">
                       {sub._count.products}
                     </TableCell>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -136,7 +136,7 @@ export function MediaUploader() {
                 Drop images here or click to browse
               </p>
               <p className="mt-0.5 text-xs text-[#A3A3A3]">
-                PNG, JPG, WEBP, GIF — multiple files supported
+                PNG, JPG, WEBP, GIF - multiple files supported
               </p>
             </div>
           </>

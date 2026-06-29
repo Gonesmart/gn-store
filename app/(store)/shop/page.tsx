@@ -8,6 +8,7 @@ import { ProductCard, type ProductCardData } from "@/components/store/product-ca
 import { ShopFilters } from "@/components/store/shop-filters";
 import { ShopSidebar, type CategoryWithChildren } from "@/components/store/shop-sidebar";
 import { ShopPagination } from "@/components/store/shop-pagination";
+import { getWishlistProductIds } from "@/actions/wishlist";
 
 const PER_PAGE = 12;
 
@@ -142,8 +143,14 @@ export default async function ShopPage({
   let productCards: ProductCardData[] = [];
   let total = 0;
   let dbError = false;
+  let wishlistedSet = new Set<string>();
 
   try {
+    // Fetch wishlist in parallel with product data — non-critical, won't crash page if it fails
+    wishlistedSet = await getWishlistProductIds()
+      .then((ids) => new Set(ids))
+      .catch(() => new Set<string>());
+
     const isPriceSort = sort === "price-asc" || sort === "price-desc";
 
     if (isPriceSort) {
@@ -156,17 +163,13 @@ export default async function ShopPage({
             },
             orderBy: { name: "asc" },
           }),
-          db.productVariant.findMany({
+          db.productVariant.groupBy({
+            by: ["size"],
             where: { product: { status: ProductStatus.ACTIVE }, size: { not: null } },
-            distinct: ["size"],
-            select: { size: true },
-            orderBy: { size: "asc" },
           }),
-          db.productVariant.findMany({
+          db.productVariant.groupBy({
+            by: ["color"],
             where: { product: { status: ProductStatus.ACTIVE }, color: { not: null } },
-            distinct: ["color"],
-            select: { color: true },
-            orderBy: { color: "asc" },
           }),
           db.product.findMany({ where, include: productInclude }),
         ]),
@@ -180,8 +183,8 @@ export default async function ShopPage({
       });
 
       categories = cats;
-      allSizes = sizes.map((v) => v.size as string);
-      allColors = colors.map((v) => v.color as string);
+      allSizes = sizes.map((v) => v.size).filter((s): s is string => s !== null).sort();
+      allColors = colors.map((v) => v.color).filter((s): s is string => s !== null).sort();
       total = allProducts.length;
       productCards = allProducts
         .slice((page - 1) * PER_PAGE, page * PER_PAGE)
@@ -199,17 +202,13 @@ export default async function ShopPage({
             },
             orderBy: { name: "asc" },
           }),
-          db.productVariant.findMany({
+          db.productVariant.groupBy({
+            by: ["size"],
             where: { product: { status: ProductStatus.ACTIVE }, size: { not: null } },
-            distinct: ["size"],
-            select: { size: true },
-            orderBy: { size: "asc" },
           }),
-          db.productVariant.findMany({
+          db.productVariant.groupBy({
+            by: ["color"],
             where: { product: { status: ProductStatus.ACTIVE }, color: { not: null } },
-            distinct: ["color"],
-            select: { color: true },
-            orderBy: { color: "asc" },
           }),
           db.product.findMany({
             where,
@@ -224,8 +223,8 @@ export default async function ShopPage({
       );
 
       categories = cats;
-      allSizes = sizes.map((v) => v.size as string);
-      allColors = colors.map((v) => v.color as string);
+      allSizes = sizes.map((v) => v.size).filter((s): s is string => s !== null).sort();
+      allColors = colors.map((v) => v.color).filter((s): s is string => s !== null).sort();
       total = count;
       productCards = products.map(toProductCard);
     }
@@ -443,7 +442,11 @@ export default async function ShopPage({
               <>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 lg:gap-5">
                   {productCards.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      initialWishlisted={wishlistedSet.has(product.id)}
+                    />
                   ))}
                 </div>
                 {totalPages > 1 && (
@@ -471,7 +474,7 @@ function toProductCard(
     slug: string;
     category: { name: string };
     images: { url: string; altText: string | null }[];
-    variants: { price: { toString(): string }; compareAtPrice: { toString(): string } | null }[];
+    variants: { id: string; price: { toString(): string }; compareAtPrice: { toString(): string } | null }[];
   }
 ): ProductCardData {
   return {
@@ -483,6 +486,7 @@ function toProductCard(
     price: p.variants[0]?.price.toString() ?? "0",
     compareAtPrice: p.variants[0]?.compareAtPrice?.toString() ?? null,
     categoryName: p.category.name,
+    variantId: p.variants[0]?.id ?? "",
   };
 }
 

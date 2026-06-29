@@ -13,7 +13,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const category = await db.category.findUnique({ where: { id }, select: { name: true } });
-  return { title: category ? `Edit — ${category.name}` : "Edit Category" };
+  return { title: category ? `Edit - ${category.name}` : "Edit Category" };
 }
 
 export default async function EditCategoryPage({ params }: PageProps) {

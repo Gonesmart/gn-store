@@ -15,7 +15,7 @@ export type CartItemData = {
   image: string | null;
   slug: string;
   quantity: number;
-  stock: number;
+  stock: number | null;
 };
 
 async function getOrCreateSessionId(): Promise<string> {
@@ -102,7 +102,7 @@ export async function addToCart(
       where: { sessionId_variantId: { sessionId, variantId } },
     });
     const newQty = (existing?.quantity ?? 0) + quantity;
-    if (newQty > variant.stock) {
+    if (variant.stock !== null && newQty > variant.stock) {
       return {
         success: false,
         error: `Only ${variant.stock} in stock.`,
@@ -140,7 +140,7 @@ export async function updateCartQty(
       where: { id: variantId },
     });
     if (!variant) return { success: false, error: "Product not found." };
-    if (quantity > variant.stock) {
+    if (variant.stock !== null && quantity > variant.stock) {
       return { success: false, error: `Only ${variant.stock} in stock.` };
     }
 

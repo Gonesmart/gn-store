@@ -1,14 +1,14 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import Image from "next/image";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatPrice } from "@/lib/utils";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart } from "lucide-react";
+import { WishlistItemCard } from "@/components/store/wishlist-item-card";
 
 export default async function WishlistPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return null;
+  if (!session) redirect("/login");
 
   const wishlist = await db.wishlist.findMany({
     where: { userId: session.user.id },
@@ -29,7 +29,7 @@ export default async function WishlistPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-black text-gray-900 dark:text-white">Wishlist</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Wishlist</h1>
         <p className="mt-1 text-sm text-gray-400 dark:text-[#A3A3A3]">
           {wishlist.length} saved item{wishlist.length !== 1 ? "s" : ""}
         </p>
@@ -55,33 +55,16 @@ export default async function WishlistPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {wishlist.map(({ product }) => {
-            const price = product.variants[0]?.price.toString() ?? "0";
-            const image = product.images[0]?.url ?? null;
-            return (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white transition-shadow hover:shadow-md dark:border-[#2A2A2A] dark:bg-[#1A1A1A]"
-              >
-                <div className="relative aspect-square bg-gray-100 dark:bg-[#111]">
-                  {image ? (
-                    <Image src={image} alt={product.name} fill className="object-cover" sizes="(max-width: 640px) 100vw, 33vw" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <ShoppingBag size={32} className="text-gray-200 dark:text-[#2A2A2A]" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col gap-1 p-4">
-                  <p className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-[#5DC600] dark:text-white">
-                    {product.name}
-                  </p>
-                  <p className="mt-auto pt-2 font-bold text-[#5DC600]">{formatPrice(parseFloat(price))}</p>
-                </div>
-              </Link>
-            );
-          })}
+          {wishlist.map(({ product }) => (
+            <WishlistItemCard
+              key={product.id}
+              productId={product.id}
+              name={product.name}
+              slug={product.slug}
+              price={product.variants[0]?.price.toString() ?? "0"}
+              image={product.images[0]?.url ?? null}
+            />
+          ))}
         </div>
       )}
     </div>

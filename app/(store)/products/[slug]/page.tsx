@@ -124,7 +124,7 @@ export default async function ProductPage({ params }: Props) {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://gonesmartsolutions.com";
   const lowestPrice = variants[0]?.price.toString() ?? "0";
-  const inStock = variants.some((v) => v.stock > 0);
+  const inStock = variants.some((v) => v.stock === null || v.stock > 0);
 
   const productJsonLd = {
     "@context": "https://schema.org",

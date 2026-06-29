@@ -123,6 +123,11 @@ export async function deleteMediaItems(ids: string[]) {
 }
 
 export async function getMediaItems(page = 1, pageSize = 48) {
+  try {
+    await requireAdmin();
+  } catch {
+    return { items: [], total: 0, page, pageSize, totalPages: 0 };
+  }
   const [items, total] = await Promise.all([
     db.media.findMany({
       orderBy: { createdAt: "desc" },

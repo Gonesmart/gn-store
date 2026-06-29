@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
@@ -147,14 +147,14 @@ export async function deleteCategory(id: string) {
     if (category._count.products > 0) {
       return {
         success: false as const,
-        error: `Cannot delete — ${category._count.products} product(s) are assigned to this category. Reassign them first.`,
+        error: `Cannot delete - ${category._count.products} product(s) are assigned to this category. Reassign them first.`,
       };
     }
 
     if (category._count.children > 0) {
       return {
         success: false as const,
-        error: `Cannot delete — this category has ${category._count.children} subcategory/subcategories. Delete them first.`,
+        error: `Cannot delete - this category has ${category._count.children} subcategory/subcategories. Delete them first.`,
       };
     }
 

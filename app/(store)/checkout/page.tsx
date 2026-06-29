@@ -1,20 +1,20 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ShoppingBag, ChevronRight, ArrowLeft,
-  Tag, X, Check, Loader2, Lock,
+  Tag, X, Check, Loader2, Lock, Eye, EyeOff,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { shippingSchema, type ShippingFormData } from "@/lib/validations/checkout";
 import { validateCoupon, initializePayment } from "@/actions/checkout";
 import { formatPrice } from "@/lib/utils";
 import type { CouponResult } from "@/actions/checkout";
+import { useSession, signUp } from "@/lib/auth-client";
 
 type ActiveCoupon = CouponResult & { valid: true };
 
@@ -161,17 +161,58 @@ function OrderSummary({ coupon }: { coupon: ActiveCoupon | null }) {
 function ShippingStep({
   onNext,
   defaultValues,
+  isLoggedIn,
 }: {
   onNext: (data: ShippingFormData) => void;
   defaultValues?: Partial<ShippingFormData>;
+  isLoggedIn: boolean;
 }) {
-  const { register, handleSubmit, formState: { errors } } = useForm<ShippingFormData>({
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm<ShippingFormData>({
     resolver: zodResolver(shippingSchema),
     defaultValues: { country: "Nigeria", ...defaultValues },
   });
 
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [accountError, setAccountError] = useState("");
+  const [accountLoading, setAccountLoading] = useState(false);
+
+  async function handleSubmitWithAccount(data: ShippingFormData) {
+    if (!isLoggedIn) {
+      if (password.length < 8) {
+        setAccountError("Password must be at least 8 characters");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setAccountError("Passwords do not match");
+        return;
+      }
+      setAccountLoading(true);
+      setAccountError("");
+      const result = await signUp.email({
+        email: data.email,
+        password,
+        name: data.fullName,
+      });
+      setAccountLoading(false);
+      if (result.error) {
+        const msg = result.error.message ?? "";
+        if (msg.toLowerCase().includes("already") || result.error.status === 422) {
+          setAccountError(
+            "An account with this email already exists. Please log in first."
+          );
+        } else {
+          setAccountError(msg || "Failed to create account. Please try again.");
+        }
+        return;
+      }
+    }
+    onNext(data);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onNext)} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit(handleSubmitWithAccount)} className="flex flex-col gap-6">
       <div>
         <h2 className="text-lg font-black text-gray-900 dark:text-white">Contact &amp; Shipping</h2>
         <p className="mt-0.5 text-sm text-gray-400 dark:text-[#A3A3A3]">
@@ -253,12 +294,69 @@ function ShippingStep({
         </Field>
       </div>
 
+      {/* Account creation - shown only for guests */}
+      {!isLoggedIn && (
+        <div className="flex flex-col gap-4 rounded-xl border border-[#5DC600]/20 bg-[#5DC600]/5 p-5">
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">
+              Create your account
+            </p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-[#A3A3A3]">
+              Required to keep track of your orders and delivery updates.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Field label="Password" error={undefined} required>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setAccountError(""); }}
+                  placeholder="At least 8 characters"
+                  className={`${inputBase} ${inputNormal} pr-10`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </Field>
+            <Field label="Confirm password" error={undefined} required>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => { setConfirmPassword(e.target.value); setAccountError(""); }}
+                placeholder="Re-enter your password"
+                className={`${inputBase} ${inputNormal}`}
+              />
+            </Field>
+          </div>
+          {accountError && (
+            <p className="text-sm text-red-500">{accountError}</p>
+          )}
+          <p className="text-xs text-gray-400 dark:text-[#555]">
+            Already have an account?{" "}
+            <Link href="/login?callbackUrl=/checkout" className="text-[#5DC600] hover:underline">
+              Log in
+            </Link>
+          </p>
+        </div>
+      )}
+
       <button
         type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#5DC600] py-3.5 font-bold text-black transition-colors hover:bg-[#4DAF00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5DC600] active:bg-[#3D9600]"
+        disabled={accountLoading}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#5DC600] py-3.5 font-bold text-black transition-colors hover:bg-[#4DAF00] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5DC600] active:bg-[#3D9600] disabled:opacity-60"
       >
-        Continue to Review
-        <ChevronRight size={17} />
+        {accountLoading ? (
+          <><Loader2 size={17} className="animate-spin" />Creating account…</>
+        ) : (
+          <>Continue to Review<ChevronRight size={17} /></>
+        )}
       </button>
     </form>
   );
@@ -357,7 +455,7 @@ function ReviewStep({
               <Tag size={14} className="text-[#5DC600]" />
               <span className="text-sm font-semibold text-[#5DC600]">{coupon.code}</span>
               <span className="text-sm text-gray-500 dark:text-[#A3A3A3]">
-                — {formatPrice(coupon.discountAmount)} off
+                - {formatPrice(coupon.discountAmount)} off
               </span>
             </div>
             <button
@@ -429,8 +527,9 @@ function ReviewStep({
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const { items, setItems } = useCartStore();
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
   const [step, setStep] = useState<1 | 2>(1);
   const [shipping, setShipping] = useState<ShippingFormData | null>(null);
   const [coupon, setCoupon] = useState<ActiveCoupon | null>(null);
@@ -499,6 +598,7 @@ export default function CheckoutPage() {
             <ShippingStep
               onNext={handleShippingNext}
               defaultValues={shipping ?? undefined}
+              isLoggedIn={isLoggedIn}
             />
           )}
           {step === 2 && shipping && (

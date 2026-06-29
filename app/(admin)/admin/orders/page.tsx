@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ShoppingBag, ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/components/admin/order-status-badge";
@@ -107,7 +107,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
           <h1 className="text-2xl font-bold tracking-tight text-white">Orders</h1>
           <p className="mt-1 text-sm text-[#A3A3A3]">
             {total} order{total !== 1 ? "s" : ""}
-            {statusFilter ? ` — ${statusFilter.toLowerCase()}` : ""}
+            {statusFilter ? ` - ${statusFilter.toLowerCase()}` : ""}
           </p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#2A2A2A] bg-[#1A1A1A]">
@@ -203,7 +203,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
                 {orders.map((order, idx) => {
                   const customer = order.user
                     ? { name: order.user.name, email: order.user.email }
-                    : { name: "Guest", email: order.guestEmail ?? "—" };
+                    : { name: "Guest", email: order.guestEmail ?? "-" };
                   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
 
                   return (

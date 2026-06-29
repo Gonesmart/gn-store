@@ -19,7 +19,7 @@ async function requireAdmin() {
 export async function getUploadSignature() {
   try {
     await requireAdmin();
-    const sig = getCloudinaryUploadSignature();
+    const sig = getCloudinaryUploadSignature("gn-store/products");
     return { success: true as const, data: sig };
   } catch {
     return { success: false as const, error: "Unauthorized" };
@@ -109,6 +109,8 @@ export async function createProduct(rawData: unknown) {
     });
 
     revalidatePath("/admin/products");
+    revalidatePath("/shop");
+    revalidatePath("/", "layout");
     return { success: true as const, data: product };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to create product";
@@ -141,20 +143,61 @@ export async function updateProduct(id: string, rawData: unknown) {
 
   try {
     await db.$transaction(async (tx) => {
-      await tx.productVariant.deleteMany({ where: { productId: id } });
+      // Get current variant IDs for this product
+      const existingVariants = await tx.productVariant.findMany({
+        where: { productId: id },
+        select: { id: true },
+      });
+      const existingIds = existingVariants.map((v) => v.id);
+
+      // Split submitted variants into updates (have DB id) and creates (new)
+      const toUpdate = variants.filter((v) => v.id && existingIds.includes(v.id));
+      const toCreate = variants.filter((v) => !v.id || !existingIds.includes(v.id));
+      const submittedIds = new Set(toUpdate.map((v) => v.id!));
+
+      // Variants in DB but not submitted - only delete if not referenced by orders
+      const toDeleteCandidates = existingIds.filter((eid) => !submittedIds.has(eid));
+      if (toDeleteCandidates.length > 0) {
+        const orderedVariants = await tx.orderItem.findMany({
+          where: { variantId: { in: toDeleteCandidates } },
+          select: { variantId: true },
+        });
+        const orderedIds = new Set(orderedVariants.map((oi) => oi.variantId));
+        const safeToDelete = toDeleteCandidates.filter((vid) => !orderedIds.has(vid));
+        if (safeToDelete.length > 0) {
+          await tx.productVariant.deleteMany({ where: { id: { in: safeToDelete } } });
+        }
+      }
+
+      // Update existing variants in-place
+      for (const v of toUpdate) {
+        await tx.productVariant.update({
+          where: { id: v.id },
+          data: {
+            size: v.size || null,
+            color: v.color || null,
+            price: v.price,
+            compareAtPrice: v.compareAtPrice != null ? Number(v.compareAtPrice) : null,
+            stock: v.stock,
+            sku: v.sku || null,
+          },
+        });
+      }
+
+      // Recreate images (no order FK constraint on images)
       await tx.productImage.deleteMany({ where: { productId: id } });
 
+      // Update product fields + create any new variants
       await tx.product.update({
         where: { id },
         data: {
           ...productData,
           variants: {
-            create: variants.map((v) => ({
+            create: toCreate.map((v) => ({
               size: v.size || null,
               color: v.color || null,
               price: v.price,
-              compareAtPrice:
-                v.compareAtPrice != null ? Number(v.compareAtPrice) : null,
+              compareAtPrice: v.compareAtPrice != null ? Number(v.compareAtPrice) : null,
               stock: v.stock,
               sku: v.sku || null,
             })),
@@ -173,6 +216,9 @@ export async function updateProduct(id: string, rawData: unknown) {
 
     revalidatePath("/admin/products");
     revalidatePath(`/admin/products/${id}`);
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/products", "layout");
     return { success: true as const };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to update product";
@@ -196,6 +242,8 @@ export async function deleteProduct(id: string) {
   try {
     await db.product.delete({ where: { id } });
     revalidatePath("/admin/products");
+    revalidatePath("/shop");
+    revalidatePath("/", "layout");
     return { success: true as const };
   } catch {
     return { success: false as const, error: "Failed to delete product" };
@@ -249,6 +297,7 @@ export async function duplicateProduct(id: string) {
     });
 
     revalidatePath("/admin/products");
+    revalidatePath("/shop");
     return { success: true as const, data: newProduct };
   } catch {
     return { success: false as const, error: "Failed to duplicate product" };
@@ -262,7 +311,13 @@ export async function updateProductStatus(id: string, status: ProductStatus) {
     return { success: false as const, error: "Unauthorized" };
   }
 
-  await db.product.update({ where: { id }, data: { status } });
-  revalidatePath("/admin/products");
-  return { success: true as const };
+  try {
+    await db.product.update({ where: { id }, data: { status } });
+    revalidatePath("/admin/products");
+    revalidatePath("/shop");
+    revalidatePath("/", "layout");
+    return { success: true as const };
+  } catch {
+    return { success: false as const, error: "Failed to update status" };
+  }
 }

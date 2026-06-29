@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -179,7 +179,7 @@ export function OrderActionsPanel({
       {/* Current status display */}
       {currentStatus === "DELIVERED" && (
         <div className="rounded-lg border border-[#5DC600]/20 bg-[#5DC600]/5 px-3 py-2 text-center text-sm text-[#5DC600]">
-          Order delivered — no further actions
+          Order delivered - no further actions
         </div>
       )}
       {currentStatus === "CANCELLED" && (

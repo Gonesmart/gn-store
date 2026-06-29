@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/utils";
@@ -18,7 +19,7 @@ function statusColor(status: string) {
 
 export default async function AccountDashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return null;
+  if (!session) redirect("/login");
 
   const [recentOrders, totalOrders, addressCount, totalSpent] = await Promise.all([
     db.order.findMany({

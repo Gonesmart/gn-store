@@ -218,6 +218,8 @@ export async function initializePayment(input: {
 
   const session = await auth.api.getSession({ headers: await headers() });
 
+  let createdOrderId: string | null = null;
+
   try {
     const cartItems = await db.cartItem.findMany({
       where: { sessionId },
@@ -295,6 +297,9 @@ export async function initializePayment(input: {
       },
     });
 
+    // Track order ID so we can clean it up if the Paystack fetch throws
+    createdOrderId = order.id;
+
     // Call Paystack initialize
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const paystackRes = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
@@ -330,6 +335,10 @@ export async function initializePayment(input: {
     return { success: true, authorizationUrl: paystackJson.data.authorization_url };
   } catch (err) {
     console.error("initializePayment error:", err);
+    // Clean up dangling order if it was created before the error
+    if (createdOrderId) {
+      await db.order.delete({ where: { id: createdOrderId } }).catch(() => {});
+    }
     return { success: false, error: "Something went wrong. Please try again." };
   }
 }

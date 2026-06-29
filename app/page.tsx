@@ -3,22 +3,26 @@ import { withTimeout } from "@/lib/utils";
 import { StoreNavbar } from "@/components/store/navbar";
 import { StoreFooter } from "@/components/store/footer";
 import { HeroSection } from "@/components/store/hero-section";
-import { CategorySection, type CategoryCardData } from "@/components/store/category-section";
+import { CategoryTicker } from "@/components/store/category-ticker";
+import { AboutSection } from "@/components/store/about-section";
+import { WhyChooseSection } from "@/components/store/why-choose-section";
+import { HowItWorksSection } from "@/components/store/how-it-works-section";
 import { FeaturedProducts } from "@/components/store/featured-products";
-import { ValueProps } from "@/components/store/value-props";
-import type { ProductCardData } from "@/components/store/product-card";
+import { StatsSection } from "@/components/store/stats-section";
+import { TestimonialsSection } from "@/components/store/testimonials-section";
+import { FaqSection } from "@/components/store/faq-section";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { CartProvider } from "@/components/providers/cart-provider";
-
-export const revalidate = 3600;
+import { getWishlistProductIds } from "@/actions/wishlist";
+import type { ProductCardData } from "@/components/store/product-card";
 
 export default async function HomePage() {
   let products: ProductCardData[] = [];
-  let categoryCards: CategoryCardData[] = [];
+  let wishlistedIds: string[] = [];
 
   try {
-    const [rawProducts, categories] = await withTimeout(
-      Promise.all([
+    const [rawProducts, wids] = await Promise.all([
+      withTimeout(
         db.product.findMany({
           where: { status: "ACTIVE", featured: true },
           include: {
@@ -29,13 +33,10 @@ export default async function HomePage() {
           take: 8,
           orderBy: { createdAt: "desc" },
         }),
-        db.category.findMany({
-          where: { parentId: null },
-          orderBy: { createdAt: "asc" },
-        }),
-      ]),
-      6000
-    );
+        6000
+      ),
+      getWishlistProductIds().catch(() => [] as string[]),
+    ]);
 
     products = rawProducts.map((p) => ({
       id: p.id,
@@ -46,14 +47,10 @@ export default async function HomePage() {
       price: p.variants[0]?.price.toString() ?? "0",
       compareAtPrice: p.variants[0]?.compareAtPrice?.toString() ?? null,
       categoryName: p.category.name,
+      variantId: p.variants[0]?.id ?? "",
     }));
 
-    categoryCards = categories.map((c) => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      image: c.image,
-    }));
+    wishlistedIds = wids;
   } catch {
     // DB unavailable or timed out — render with fallback data
   }
@@ -96,13 +93,39 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
-      <StoreNavbar />
-      <main className="flex-1">
+
+      {/* Navbar floats over hero */}
+      <StoreNavbar overlayHero />
+
+      <main>
+        {/* 1. Hero — full-bleed background photo */}
         <HeroSection />
-        <CategorySection categories={categoryCards} />
-        <FeaturedProducts products={products} />
-        <ValueProps />
+
+        {/* 2. Category ticker strip */}
+        <CategoryTicker />
+
+        {/* 3. About GN Store — dark section */}
+        <AboutSection />
+
+        {/* 4. Why Choose Us — split layout */}
+        <WhyChooseSection />
+
+        {/* 6. How It Works — 3 steps, dark */}
+        <HowItWorksSection />
+
+        {/* 7. Featured Products — light/gray */}
+        <FeaturedProducts products={products} wishlistedIds={wishlistedIds} />
+
+        {/* 8. Stats + Benefits — dark */}
+        <StatsSection />
+
+        {/* 9. Customer Reviews — dark */}
+        <TestimonialsSection />
+
+        {/* 10. FAQ — light */}
+        <FaqSection />
       </main>
+
       <StoreFooter />
       <CartDrawer />
     </CartProvider>

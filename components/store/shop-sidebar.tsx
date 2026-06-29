@@ -203,7 +203,7 @@ export function ShopSidebar({
             />
           </div>
           <span className="mb-2 text-xs text-gray-300 dark:text-[#3A3A3A]">
-            &mdash;
+            to
           </span>
           <div className="flex-1">
             <label className="mb-1 block text-xs text-gray-400 dark:text-[#555]">
@@ -233,7 +233,7 @@ export function ShopSidebar({
             {activeFilters.minPrice
               ? formatPrice(activeFilters.minPrice)
               : "Any"}{" "}
-            &mdash;{" "}
+            {" to "}
             {activeFilters.maxPrice
               ? formatPrice(activeFilters.maxPrice)
               : "Any"}

@@ -4,19 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   ShoppingCart,
   TrendingUp,
   Users,
   Package,
 } from "lucide-react";
+import { RecentOrdersTable } from "@/components/admin/recent-orders-table";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -24,17 +17,6 @@ export const metadata: Metadata = { title: "Dashboard" };
 function formatNaira(amount: { toString(): string } | number | null | undefined) {
   const n = parseFloat(String(amount ?? 0));
   return `₦${n.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
-}
-
-function getOrderStatusColor(status: string) {
-  const map: Record<string, string> = {
-    PENDING: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-    PROCESSING: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    SHIPPED: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    DELIVERED: "bg-[#5DC600]/15 text-[#5DC600] border-[#5DC600]/30",
-    CANCELLED: "bg-red-500/15 text-red-400 border-red-500/30",
-  };
-  return map[status] ?? "bg-[#2A2A2A] text-[#A3A3A3]";
 }
 
 async function DashboardStats() {
@@ -165,61 +147,13 @@ async function DashboardStats() {
             boxShadow: "0 1px 3px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3)",
           }}
         >
-          {recentOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <ShoppingCart className="h-10 w-10 text-[#2A2A2A] mb-3" />
-              <p className="text-sm font-medium text-[#A3A3A3]">No orders yet</p>
-              <p className="text-xs text-[#4A4A4A] mt-1">
-                Orders will appear here once customers start purchasing.
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-[#2A2A2A] hover:bg-transparent">
-                  <TableHead className="text-[#A3A3A3]">Order</TableHead>
-                  <TableHead className="text-[#A3A3A3]">Customer</TableHead>
-                  <TableHead className="text-[#A3A3A3]">Status</TableHead>
-                  <TableHead className="text-right text-[#A3A3A3]">Total</TableHead>
-                  <TableHead className="text-[#A3A3A3]">Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentOrders.map((order) => (
-                  <TableRow
-                    key={order.id}
-                    className="border-[#2A2A2A] hover:bg-[#242424] cursor-pointer"
-                    onClick={() =>
-                      (window.location.href = `/admin/orders/${order.id}`)
-                    }
-                  >
-                    <TableCell className="font-medium text-white">
-                      {order.orderNumber}
-                    </TableCell>
-                    <TableCell className="text-[#A3A3A3]">
-                      {order.user?.name ?? order.guestEmail ?? "Guest"}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getOrderStatusColor(order.status)}`}
-                      >
-                        {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-white">
-                      {formatNaira(order.total)}
-                    </TableCell>
-                    <TableCell className="text-[#A3A3A3] text-sm">
-                      {new Date(order.createdAt).toLocaleDateString("en-NG", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <RecentOrdersTable
+            orders={recentOrders.map((o) => ({
+              ...o,
+              total: formatNaira(o.total),
+              createdAt: o.createdAt.toISOString(),
+            }))}
+          />
         </Card>
       </div>
     </>

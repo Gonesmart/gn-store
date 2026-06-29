@@ -5,8 +5,8 @@ export const variantSchema = z.object({
   size: z.string().optional(),
   color: z.string().optional(),
   price: z.number().positive("Price must be greater than 0"),
-  compareAtPrice: z.number().positive().nullable().optional(),
-  stock: z.number().int().min(0, "Stock cannot be negative"),
+  compareAtPrice: z.number().positive("Compare price must be greater than 0").nullable().optional(),
+  stock: z.number().int().min(0, "Stock cannot be negative").nullable().optional(),
   sku: z.string().optional(),
 });
 
