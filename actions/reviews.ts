@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { reviewSchema } from "@/lib/validations/reviews";
 
 type ReviewResult =
@@ -52,6 +52,7 @@ export async function submitReview(input: unknown): Promise<ReviewResult> {
       select: { slug: true },
     });
     if (product) revalidatePath(`/products/${product.slug}`);
+    revalidateTag("admin-notifications");
 
     return { success: true };
   } catch {

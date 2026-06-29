@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 type Result = { success: true } | { success: false; error: string };
 
@@ -24,6 +24,7 @@ export async function approveReview(id: string): Promise<Result> {
     });
     revalidatePath(`/products/${review.product.slug}`);
     revalidatePath("/admin/reviews");
+    revalidateTag("admin-notifications");
     return { success: true };
   } catch {
     return { success: false, error: "Failed to approve review." };
@@ -39,6 +40,7 @@ export async function deleteReview(id: string): Promise<Result> {
     });
     revalidatePath(`/products/${review.product.slug}`);
     revalidatePath("/admin/reviews");
+    revalidateTag("admin-notifications");
     return { success: true };
   } catch {
     return { success: false, error: "Failed to delete review." };

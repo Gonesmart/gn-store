@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Bell, Store, LogOut, ShoppingBag, UserPlus, CheckCheck } from "lucide-react";
+import { Menu, Bell, Store, LogOut, ShoppingBag, UserPlus, CheckCheck, Star } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AdminSidebar } from "@/components/admin/sidebar";
@@ -170,9 +170,11 @@ export function AdminTopbar({ userName, userEmail, notifications }: AdminTopbarP
                         isUnread ? "bg-[#5DC600]/[0.04]" : ""
                       }`}
                     >
-                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#5DC600]/10">
+                      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${n.type === "pending_review" ? "bg-yellow-400/10" : "bg-[#5DC600]/10"}`}>
                         {n.type === "new_order" ? (
                           <ShoppingBag className="h-3.5 w-3.5 text-[#5DC600]" />
+                        ) : n.type === "pending_review" ? (
+                          <Star className="h-3.5 w-3.5 text-yellow-400" />
                         ) : (
                           <UserPlus className="h-3.5 w-3.5 text-[#5DC600]" />
                         )}

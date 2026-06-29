@@ -7,7 +7,7 @@ import { unstable_cache } from "next/cache";
 
 export type AdminNotification = {
   id: string;
-  type: "new_order" | "new_customer";
+  type: "new_order" | "new_customer" | "pending_review";
   title: string;
   body: string;
   link: string;
@@ -21,7 +21,7 @@ const fetchNotificationsForUser = unstable_cache(
   async (userId: string): Promise<AdminNotification[]> => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const [orders, customers] = await Promise.all([
+    const [orders, customers, reviews] = await Promise.all([
       db.order.findMany({
         where: { createdAt: { gte: since } },
         include: { user: { select: { name: true } } },
@@ -30,6 +30,15 @@ const fetchNotificationsForUser = unstable_cache(
       }),
       db.user.findMany({
         where: { role: "CUSTOMER", createdAt: { gte: since } },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      db.review.findMany({
+        where: { approved: false, createdAt: { gte: since } },
+        include: {
+          user: { select: { name: true } },
+          product: { select: { name: true } },
+        },
         orderBy: { createdAt: "desc" },
         take: 20,
       }),
@@ -51,6 +60,14 @@ const fetchNotificationsForUser = unstable_cache(
         body: u.name ?? u.email,
         link: `/admin/customers`,
         createdAt: u.createdAt,
+      })),
+      ...reviews.map((r) => ({
+        id: `review-${r.id}`,
+        type: "pending_review" as const,
+        title: "Review awaiting approval",
+        body: `${r.user.name ?? "A customer"} reviewed ${r.product.name}`,
+        link: `/admin/reviews`,
+        createdAt: r.createdAt,
       })),
     ];
 
