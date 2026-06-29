@@ -62,7 +62,7 @@ export function CouponActions({ coupon }: CouponActionsProps) {
           aria-checked={coupon.active}
           onClick={handleToggle}
           disabled={isPending}
-          className={`relative h-5 w-9 rounded-full transition-colors disabled:opacity-50 ${
+          className={`relative h-5 w-9 overflow-hidden rounded-full transition-colors disabled:opacity-50 ${
             coupon.active ? "bg-[#5DC600]" : "bg-[#2A2A2A]"
           }`}
           title={coupon.active ? "Disable coupon" : "Enable coupon"}
