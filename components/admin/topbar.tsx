@@ -59,7 +59,7 @@ export function AdminTopbar({ userName, userEmail, notifications: initialNotific
     }
   }, []);
 
-  // Poll for new notifications every 30 seconds
+  // Poll for new notifications every 5 seconds
   useEffect(() => {
     async function poll() {
       try {
@@ -73,7 +73,8 @@ export function AdminTopbar({ userName, userEmail, notifications: initialNotific
       }
     }
 
-    const id = setInterval(poll, 30_000);
+    poll(); // fetch immediately on mount
+    const id = setInterval(poll, 5_000);
     return () => clearInterval(id);
   }, []);
 
@@ -135,7 +136,15 @@ export function AdminTopbar({ userName, userEmail, notifications: initialNotific
       <div ref={bellRef} className="relative">
         <button
           type="button"
-          onClick={() => { setBellOpen((o) => !o); setProfileOpen(false); }}
+          onClick={async () => {
+            setBellOpen((o) => !o);
+            setProfileOpen(false);
+            // Fetch fresh on open so the list is always up to date
+            try {
+              const res = await fetch("/api/admin/notifications", { cache: "no-store" });
+              if (res.ok) setNotifications((await res.json()) as AdminNotification[]);
+            } catch {}
+          }}
           className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[#A3A3A3] transition-colors duration-150 hover:bg-[#2A2A2A] hover:text-white focus-visible:outline-none"
           aria-label="Notifications"
         >
