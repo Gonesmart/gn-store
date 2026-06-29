@@ -230,12 +230,8 @@ export default async function ProductPage({ params }: Props) {
 
               {/* Rating summary */}
               {reviewCount > 0 && (
-                <button
-                  onClick={() =>
-                    document
-                      .getElementById("reviews")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
+                <a
+                  href="#reviews"
                   className="mt-3 flex items-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5DC600]"
                 >
                   <StarDisplay rating={avgRating} size={14} />
@@ -243,7 +239,7 @@ export default async function ProductPage({ params }: Props) {
                     {avgRating.toFixed(1)} ({reviewCount}{" "}
                     {reviewCount === 1 ? "review" : "reviews"})
                   </span>
-                </button>
+                </a>
               )}
             </div>
 

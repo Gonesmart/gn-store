@@ -163,11 +163,15 @@ export default async function CheckoutVerifyPage({
     }
   }
 
-  // Clear the cart from DB
-  const jar = await cookies();
-  const sessionId = jar.get("gn_cart_session")?.value;
-  if (sessionId) {
-    await db.cartItem.deleteMany({ where: { sessionId } });
+  // Clear the cart from DB (non-fatal — cart will expire naturally if this fails)
+  try {
+    const jar = await cookies();
+    const sessionId = jar.get("gn_cart_session")?.value;
+    if (sessionId) {
+      await db.cartItem.deleteMany({ where: { sessionId } });
+    }
+  } catch {
+    // Non-fatal
   }
 
   redirect(`/checkout/success?order=${order.orderNumber}`);
